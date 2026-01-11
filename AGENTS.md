@@ -21,6 +21,17 @@ Primary reference: `./workspace/GOAL.md` (authoritative target and integration b
 - Before starting work, add a one-line "Goal alignment" rationale in your notes or PR description.
 - If work conflicts with the goal, reroute and propose an aligned alternative.
 
+### Constraint Policies (Must-Haves)
+
+- **Heart rate target**: detected BPM should fall within **270–310 bpm** (flag deviations and adjust preprocessing or band selection).
+- **Respiration target**: respiratory cycles should be **~72 cycles/min** (expect a stable period near **0.83 s**; adjust resp band if drifting).
+- **Decomposition expectation**:
+  - Respiration is **low‑frequency, near‑sinusoidal, and stable in period** across the clip.
+  - Respiration **amplitude should exceed heart** in FFT decomposition plots.
+  - Heart band is **higher‑frequency** with **minimal slow envelope drift**; if strong slow modulation appears, treat as leakage.
+- **Label integrity**: labels come from filenames and must never be used to bias clustering inputs; only use them for evaluation and reporting.
+- **Leakage guard**: keep beat detection/feature extraction independent of labels; validate by animal/recording for any supervised baselines.
+
 ---
 
 ## 📁 PROJECT STRUCTURE OVERVIEW
@@ -133,4 +144,3 @@ No build orchestration files were found (no `Cargo.toml`, `package.json`, `Makef
 - `./workspace/GOAL.md` is the single source of truth; keep AGENTS/plan files aligned.
 - No MCP/memory services are configured yet (TODO: document if added).
 - Follow sandbox/approval policies for destructive commands and network access.
-
