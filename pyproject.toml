@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "heart-ts-analysis"
+version = "0.1.0"
+description = "MIDAS heart/resp motion analysis pipeline."
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+scipy = "^1.13.1"
+matplotlib = "^3.9.0"
+scikit-learn = "^1.5.0"
+pywavelets = "^1.6.0"
+sktime = "^0.30.0"
+tslearn = "^0.6.3"
+umap-learn = "^0.5.6"
+hdbscan = "^0.8.38"
+vmdpy = "^0.2"
+jupyter = "^1.0.0"
+ipykernel = "^6.29.4"
+
+[build-system]
+requires = ["poetry-core>=1.6.0"]
+build-backend = "poetry.core.masonry.api"
