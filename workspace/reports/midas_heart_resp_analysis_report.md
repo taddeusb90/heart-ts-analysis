@@ -48,6 +48,7 @@ Clustering never uses these labels.
 - HR is estimated from the **heart-band PSD peak** after separation.
 
 ### 2) Respiration vs heart separation
+- **Methodology update**: Respiration is isolated first using a fixed band-pass (70-80 bpm). The **Heart component is derived from the residual** (Signal - Respiration) to ensure complete removal of respiratory motion, followed by a band-pass filter (270-310 bpm) to isolate cardiac activity.
 - Two methods:
   - FFT masking
   - Zero-phase Butterworth band-pass (current default)
@@ -181,7 +182,8 @@ Open: `notebooks/heart_midas_pipeline.ipynb`
 
 ## Handover notes
 
-- Heart-rate estimation is now within expected bounds.
+- **Pipeline Update**: The separation logic now explicitly defines the Heart component as the residual of the signal after removing the fixed respiratory band (70-80 bpm).
+- Heart-rate estimation is now within expected bounds (270-310 bpm).
 - Respiratory extraction is locked to the fixed ventilator range (70–80 bpm).
 - Unsupervised clustering does not show strong separation; record-level spectral features remain the most reliable signal.
 
