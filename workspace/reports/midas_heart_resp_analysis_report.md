@@ -48,12 +48,14 @@ Clustering never uses these labels.
 - HR is estimated from the **heart-band PSD peak** after separation.
 
 ### 2) Respiration vs heart separation
+- **Methodology update**: Respiration is isolated first using a fixed band-pass (71–73 bpm). The heart component is isolated with band-pass filtering (FFT masking or zero-phase Butterworth), using a wider morphology band for separation and a tighter band for HR estimation.
 - Two methods:
   - FFT masking
   - Zero-phase Butterworth band-pass (current default)
 - Current bands:
-  - Respiration: **fixed band-pass** from 70–80 bpm
-  - Heart: `HEART_BAND_HZ = (MIN_BPM/60, MAX_BPM/60)` → (4.5–5.17 Hz)
+  - Respiration: **fixed band-pass** from 71–73 bpm
+  - Heart separation: `HEART_SEPARATION_BAND_HZ` → (4.0–6.5 Hz)
+  - HR estimation: `HEART_BAND_HZ` → (4.5–5.17 Hz)
 
 ### 3) Respiratory cycle timing
 - Detects peaks/troughs in smoothed respiration to estimate:
@@ -62,8 +64,8 @@ Clustering never uses these labels.
   - Exhalation duration (peak → trough)
 
 **Ventilator target**:
-- Controlled at **70–80 cycles/min**.
-- Notebook setting: `RESP_BPM_RANGE = (70.0, 80.0)`.
+- Controlled at **~72 cycles/min**.
+- Notebook setting: `RESP_BPM_RANGE = (71.0, 73.0)`.
 - Resp band uses a **narrow band-pass** locked to the range.
 
 ### 4) Beat detection
@@ -75,44 +77,37 @@ Clustering never uses these labels.
 - `RESAMPLE_LEN = 256`.
 
 ### 6) Features + clustering
-- **Unsupervised** clustering on beat-level features (MiniROCKET + KMeans/HDBSCAN)
-- **k-Shape** beat-shape clustering
-- **Record-level clustering** (aggregate beats per recording)
-- **Record-level features** (resp power, heart power, PSD HR, HRV proxy)
+- **Unsupervised** beat-level clustering (KMeans on PCA + MiniROCKET features)
+- Beat embedding visualization (labels vs clusters)
+- Record-level features (resp power, heart power, PSD HR, HRV proxy)
 
 ### 7) Visualizations and saving
 - All plots are saved automatically to `./outputs/figures`.
 
 ---
 
-## Results summary (60 fps, RESP_BPM_RANGE=70–80)
+## Results summary (60 fps, RESP_BPM_RANGE=71–73)
 
 ### Heart rate estimates
-- **PSD HR (bpm)**: mean **286.0**, median **283.0**, min **273.5**, max **307.9**
-- **Peak HR (bpm)**: mean **291.6**, median **300.0**, min **276.9**, max **300.0**
+- **PSD HR (bpm)**: mean **289.9**, median **290.1**, min **272.0**, max **309.1**
 
 These align with the expected 270–310 bpm range.
 
 ### Respiratory cycle timing (fixed range)
-- Expected cycle at 75 bpm ≈ **0.80 s**.
-- Measured cycle delta vs expected: mean **−0.01 s**, min **−0.04 s**, max **+0.03 s**.
+- Expected cycle at 72 bpm ≈ **0.83 s**.
+- Measured cycle delta vs expected: mean **~0.00 s**, observed range **−0.01 s to +0.00 s**.
 
 This indicates respiration is now locked to the ventilator range as intended.
 
 ### Beat extraction and clustering
-- Total beat windows: **873** (shape length 256)
-- Supervised MiniROCKET Group CV accuracy: **~0.20 ± 0.09**
+- Total beat windows: **70** (shape length 256, capped to 60 beats/record for balance)
+- Supervised MiniROCKET Group CV accuracy: **0.143 ± 0.065**
 
-**Unsupervised beat-level clustering** (weak signal):
-- KMeans ARI 0.011, NMI 0.012, alignment 0.315
-- HDBSCAN ARI 0.002, NMI 0.004, alignment 0.346
-- k-Shape ARI 0.001, NMI 0.003, alignment 0.276
+**Unsupervised beat-level clustering** (redo, beats only):
+- Beat KMeans (PCA features): ARI **0.026**, NMI **0.073**, purity **0.414**
+- Beat KMeans (MiniROCKET features): ARI **0.026**, NMI **0.073**, purity **0.414**
 
-**Record-level clustering**:
-- Record-level KMeans (beat features): ARI −0.074, NMI 0.155, alignment 0.389
-- Record-level KMeans (spectral features): ARI 0.074, NMI 0.308, alignment 0.500
-
-**Interpretation**: Beat-level clustering remains weak. Record-level spectral features are the most stable unsupervised signal, though still modest.
+**Interpretation**: Beat-level clustering improves slightly but remains weak; purity is modest. This suggests that beat morphology alone is not strongly separated by treatment in this dataset.
 
 ---
 
@@ -161,13 +156,16 @@ Open: `notebooks/heart_midas_pipeline.ipynb`
 ## Key parameters in notebook (current)
 
 - `FRAME_RATE_FPS = 60.0`
-- `RESP_BPM_RANGE = (70.0, 80.0)`
+- `RESP_BPM_RANGE = (71.0, 73.0)`
 - `RESP_BAND_HZ = (0.1, 2.0)` (fallback if range not set)
 - `MIN_BPM = 270`, `MAX_BPM = 310`
 - `HEART_BAND_HZ = (4.5, 5.17)`
+- `HEART_SEPARATION_BAND_HZ = (4.0, 6.5)`
 - `REFRACTORY_S = 0.85 * (60 / MAX_BPM)`
-- `ENV_SMOOTH_S = 0.05`
+- `ENV_SMOOTH_S = 0.02`
+- `BEAT_PROMINENCE = 0.8`
 - `RESAMPLE_LEN = 256`
+- `MAX_BEATS_PER_RECORD = 60`
 
 ---
 
@@ -181,7 +179,7 @@ Open: `notebooks/heart_midas_pipeline.ipynb`
 
 ## Handover notes
 
-- Heart-rate estimation is now within expected bounds.
-- Respiratory extraction is locked to the fixed ventilator range (70–80 bpm).
+- **Pipeline Update**: Respiration and heart are isolated via band-pass filtering (FFT or zero-phase Butterworth). The separation band is wider (4.0–6.5 Hz) for morphology; HR estimation remains in 270–310 bpm.
+- Heart-rate estimation is now within expected bounds (270-310 bpm).
+- Respiratory extraction is locked to the fixed ventilator range (71–73 bpm).
 - Unsupervised clustering does not show strong separation; record-level spectral features remain the most reliable signal.
-
